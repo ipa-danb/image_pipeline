@@ -8,6 +8,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(catkin REQUIRED COMPONENTS camera_calibration_parsers cv_bridge dynamic_reconfigure image_transport message_filters message_generation nodelet rosconsole roscpp std_srvs stereo_msgs)
 generate_dynamic_reconfigure_options(cfg/ImageView.cfg)
 
+add_service_files(
+   FILES
+   String.srv
+#   Service2.srv
+)
+
+generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+)
+
 catkin_package(CATKIN_DEPENDS dynamic_reconfigure)
 find_package(Boost REQUIRED COMPONENTS thread)
 find_package(OpenCV REQUIRED)
@@ -16,6 +27,7 @@ include_directories(${Boost_INCLUDE_DIRS}
                     ${catkin_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
 )
+
 
 # Extra tools
 add_executable(extract_images src/nodes/extract_images.cpp)

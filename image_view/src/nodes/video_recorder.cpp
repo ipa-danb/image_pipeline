@@ -24,6 +24,7 @@
 #include <image_transport/image_transport.h>
 #include <camera_calibration_parsers/parse.h>
 #include "std_srvs/Trigger.h"
+#include <image_view/String.h>
 #include <atomic>
 #if CV_MAJOR_VERSION == 3
 #include <opencv2/videoio.hpp>
@@ -113,7 +114,7 @@ std::string stamp_filename(const std::string& filename)
     std::string path = filename.substr(0, found + 1);
     std::string basename = filename.substr(found + 1);
     std::stringstream ss;
-    ss << ros::Time::now().toNSec() << basename;
+    ss <<  basename << "_" << ros::Time::now().toNSec() << ".avi";
     std::string filename_stamped = path + ss.str();
     ROS_INFO("Video recording to %s", filename_stamped.c_str());
     return filename_stamped;
@@ -124,6 +125,15 @@ bool start_cb(std_srvs::Trigger::Request  &req,
 {
     filename = stamp_filename(filename_orig);
     ROS_INFO("STARTING");
+    recording = true;
+    return true;
+}
+
+bool start_string_cb(image_view::String::Request  &req,
+         image_view::String::Response &res)
+{
+    filename = stamp_filename(std::string(req.str).c_str());
+    ROS_INFO("STARTING with name %s",filename.c_str());
     recording = true;
     return true;
 }
@@ -142,7 +152,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "video_recorder", ros::init_options::AnonymousName);
     ros::NodeHandle nh;
     ros::NodeHandle local_nh("~");
-    local_nh.param("filename", filename_orig, std::string("output.avi"));
+    local_nh.param("filename", filename_orig, std::string("output"));
     bool stamped_filename;
     local_nh.param("stamped_filename", stamped_filename, false);
     local_nh.param("fps", fps, 15);
@@ -164,11 +174,13 @@ int main(int argc, char** argv)
     }
 
     ros::ServiceServer srv_start;
+    ros::ServiceServer srv_start_named;
     ros::ServiceServer srv_stop;
 
     if (save_all_video)
     {
         srv_start = local_nh.advertiseService("start", start_cb);
+        srv_start_named = local_nh.advertiseService("start_named", start_string_cb);
         srv_stop = local_nh.advertiseService("stop", stop_cb);
         recording = false;
     }
